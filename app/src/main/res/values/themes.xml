@@ -2,4 +2,9 @@
 <resources>
 
     <style name="Theme.ShoppingPointsAdmin" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.SplashScreen.MySplash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/app_logo1</item>
+        <item name="postSplashScreenTheme">@style/Theme.SplashScreen</item>
+    </style>
 </resources>
