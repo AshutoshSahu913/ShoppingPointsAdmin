@@ -22,7 +22,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-// Install the splash screen
+        // Install the splash screen
         val splashScreen = installSplashScreen()
 
         // Keep the splash screen visible until some condition is met
@@ -42,9 +42,9 @@ class MainActivity : ComponentActivity() {
                 .start()
         }
 
-//        splashScreen.setKeepOnScreenCondition(condition = {
-//            someCondition()
-//        })
+        splashScreen.setKeepOnScreenCondition(condition = {
+            someCondition()
+        })
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -70,9 +70,6 @@ class MainActivity : ComponentActivity() {
 
 // This is your condition function to determine when to dismiss the splash screen
 private fun someCondition(): Boolean {
-    // Return true if the condition to keep the splash screen is met
-    // Return false when the splash screen should be dismissed
-    // For example, you might wait for some data to load or some initialization
     return isDataLoaded
 }
 

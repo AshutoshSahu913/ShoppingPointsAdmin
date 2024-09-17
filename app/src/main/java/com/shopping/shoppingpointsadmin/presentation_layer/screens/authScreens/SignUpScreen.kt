@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.TagFaces
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -59,13 +62,17 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.shopping.shoppingpointsadmin.R
 import com.shopping.shoppingpointsadmin.presentation_layer.navigation.AdminRoutes
+import com.shopping.shoppingpointsadmin.presentation_layer.navigation.AdminSubNavigation
+import com.shopping.shoppingpointsadmin.presentation_layer.viewModel.AppViewModel
 import com.shopping.shoppingpointsadmin.ui.theme.AppColor
 import com.shopping.shoppingpointsadmin.ui.theme.BackgroundColor
 import com.shopping.shoppingpointsadmin.utils.encryptPassword
 import com.shopping.shoppingpointsadmin.utils.isPasswordStrong
 
 @Composable
-fun SignUpScreen(navController: NavHostController, navController1: NavHostController) {
+fun SignUpScreen(
+    navController: NavHostController, appViewModel: AppViewModel
+) {
 
     val adminName = remember {
         mutableStateOf("")
@@ -100,6 +107,10 @@ fun SignUpScreen(navController: NavHostController, navController1: NavHostContro
     var passwordVisible by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+
+    val registerStateResponse = appViewModel.registerUserResponse.value
+
+
     Column(
         modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly
     ) {
@@ -123,8 +134,7 @@ fun SignUpScreen(navController: NavHostController, navController1: NavHostContro
             modifier = Modifier
                 .padding(10.dp)
                 .background(
-                    color = Color.White,
-                    shape = RoundedCornerShape(40.dp)
+                    color = Color.White, shape = RoundedCornerShape(40.dp)
                 )
                 .weight(0.65f)
                 .fillMaxWidth()
@@ -377,7 +387,7 @@ fun SignUpScreen(navController: NavHostController, navController1: NavHostContro
                         style = SpanStyle(
                             color = Color(0xFF0088FF),
                             textDecoration = TextDecoration.Underline,
-                            fontSize = 12.sp
+                            fontSize = 10.sp
                         )
                     ) {
                         append("Terms & Conditions")
@@ -391,7 +401,7 @@ fun SignUpScreen(navController: NavHostController, navController1: NavHostContro
                         style = SpanStyle(
                             color = Color(0xFF0088FF),
                             textDecoration = TextDecoration.Underline,
-                            fontSize = 12.sp
+                            fontSize = 10.sp
                         )
                     ) {
                         append("Privacy Policy")
@@ -405,72 +415,102 @@ fun SignUpScreen(navController: NavHostController, navController1: NavHostContro
                     fontStyle = FontStyle.Normal,
                     fontFamily = FontFamily.SansSerif,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 12.sp,
+                    fontSize = 10.sp,
                     color = Color.Gray,
                     modifier = Modifier.padding(top = 10.dp)
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
-                ElevatedButton(
-                    contentPadding = PaddingValues(horizontal = 100.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        errorName.value = false
-                        errorPhone.value = false
-                        errorEmail.value = false
-                        errorPassword.value = false
 
-                        if (adminName.value.isEmpty() || adminPhone.value.isEmpty() || adminEmail.value.isEmpty()) {
-                            if (adminName.value.isEmpty()) {
-                                errorName.value = true
-                            }
-                            if (adminPhone.value.isEmpty()) {
-                                errorPhone.value = true
-                            }
-                            if (adminEmail.value.isEmpty()) {
-                                errorEmail.value = true
-                            }
-                            if (adminPassword.value.isEmpty()) {
+                if (registerStateResponse.isLoading) {
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = AppColor,
+                            strokeCap = StrokeCap.Round,
+                            strokeWidth = 2.dp
+                        )
+                    }
+
+                } else {
+                    ElevatedButton(
+                        contentPadding = PaddingValues(horizontal = 100.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            errorName.value = false
+                            errorPhone.value = false
+                            errorEmail.value = false
+                            errorPassword.value = false
+
+                            if (adminName.value.isEmpty() || adminPhone.value.isEmpty() || adminEmail.value.isEmpty()) {
+                                if (adminName.value.isEmpty()) {
+                                    errorName.value = true
+                                }
+                                if (adminPhone.value.isEmpty()) {
+                                    errorPhone.value = true
+                                }
+                                if (adminEmail.value.isEmpty()) {
+                                    errorEmail.value = true
+                                }
+                                if (adminPassword.value.isEmpty()) {
+                                    errorPassword.value = true
+                                }
+                                Toast.makeText(context, "Fill all the Fields", Toast.LENGTH_SHORT)
+                                    .show()
+                            } else if (!isPasswordStrong(adminPassword.value)) {
                                 errorPassword.value = true
-                            }
-                            Toast.makeText(context, "Fill all the Fields", Toast.LENGTH_SHORT)
-                                .show()
-                        } else if (!isPasswordStrong(adminPassword.value)) {
-                            errorPassword.value = true
-                            Toast.makeText(context, "Password must be strong", Toast.LENGTH_SHORT)
-                                .show()
-                        } else {
-                            val encryptedPassword = encryptPassword(adminPassword.value)
-                            // Save the encrypted password securely (e.g., send it to your server or store it locally)
-                            Toast.makeText(
-                                context,
-                                "Login successful with encrypted password: $encryptedPassword",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                                Toast.makeText(
+                                    context, "Password must be strong", Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                val encryptedPassword = encryptPassword(adminPassword.value)
+                                // all sign up process
 
-                            // all sign up process
+                                appViewModel.registerUser(
+                                    email = adminEmail.value, password = encryptedPassword
+                                )
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(AppColor)
+                    ) {
+                        Text(
+                            text = "Sign up",
+                            fontStyle = FontStyle.Normal,
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = FontFamily(
+                                Font(R.font.playpen_sans_medium)
+                            ),
+                            fontSize = 17.sp,
+                            color = Color.White
+                        )
+                    }
+                    // Show error message if there is one
+                    if (registerStateResponse.error.isNotEmpty()) {
+                        Toast.makeText(context, registerStateResponse.error, Toast.LENGTH_SHORT)
+                            .show()
+                    }
+
+                    LaunchedEffect(key1 = true) {
+                        // Show success message when registration is successful
+                        if (registerStateResponse.success != null) {
+                            Toast.makeText(context, "Register User Successfully!", Toast.LENGTH_SHORT)
+                                .show()
+                            navController.navigate(AdminSubNavigation.AdminHomeMainNav)
                         }
-                    },
-                    colors = ButtonDefaults.buttonColors(AppColor)
-                ) {
-                    Text(
-                        text = "Sign up",
-                        fontStyle = FontStyle.Normal,
-                        fontWeight = FontWeight.Normal,
-                        fontFamily = FontFamily(
-                            Font(R.font.playpen_sans_medium)
-                        ),
-                        fontSize = 17.sp,
-                        color = Color.White
-                    )
+
+                    }
+
                 }
+
 
                 val annotatedText1 = buildAnnotatedString {
                     append("Joined us before? ")
-
-                    // Annotate "Terms & Conditions"
                     withStyle(
                         style = SpanStyle(
                             color = Color(0xFF0088FF),
@@ -480,7 +520,6 @@ fun SignUpScreen(navController: NavHostController, navController1: NavHostContro
                     ) {
                         append("Login")
                     }
-
                 }
                 Text(
                     text = annotatedText1,
@@ -492,12 +531,10 @@ fun SignUpScreen(navController: NavHostController, navController1: NavHostContro
                     modifier = Modifier
                         .clickable {
                             navController.navigate(AdminRoutes.LoginScreen)
-                        }.padding(10.dp)
-
-
+                        }
+                        .padding(10.dp)
                 )
             }
-
         }
     }
 }

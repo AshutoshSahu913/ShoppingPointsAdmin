@@ -7,16 +7,15 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/app_logo1"
+        android:icon="@drawable/agraph_text"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/app_logo1"
+        android:roundIcon="@drawable/agraph_text"
         android:supportsRtl="true"
         android:theme="@style/Theme.SplashScreen.MySplash"
         tools:targetApi="31">
         <activity
             android:name=".presentation_layer.MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.ShoppingPointsAdmin">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
