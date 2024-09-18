@@ -7,9 +7,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/agraph_text"
+        android:icon="@drawable/shopoints"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/agraph_text"
+        android:roundIcon="@drawable/shopoints"
         android:supportsRtl="true"
         android:theme="@style/Theme.SplashScreen.MySplash"
         tools:targetApi="31">

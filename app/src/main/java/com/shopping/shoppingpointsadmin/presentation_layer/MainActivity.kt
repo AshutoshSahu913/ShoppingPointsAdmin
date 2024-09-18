@@ -2,7 +2,6 @@ package com.shopping.shoppingpointsadmin.presentation_layer
 
 import android.os.Bundle
 import android.view.View
-import android.window.SplashScreenView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,30 +20,20 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private var isDataLoaded: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Install the splash screen
         val splashScreen = installSplashScreen()
 
-        // Keep the splash screen visible until some condition is met
-        // Set an exit animation listener
-        splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
-            val splashScreenView: View = splashScreenViewProvider.view
-
-            // Animate the splash screen exit, e.g. fading out
-            splashScreenView
-                .animate()
-                .alpha(0f)  // Fade out effect
-                .setDuration(1000L)  // Animation duration (1 second)
-                .withEndAction {
-                    // Remove the splash screen after the animation
-                    splashScreenViewProvider.remove()
-                }
-                .start()
+        // Keep the splash screen visible until the data is loaded
+        splashScreen.setKeepOnScreenCondition {
+            !isDataLoaded
         }
 
-        splashScreen.setKeepOnScreenCondition(condition = {
-            someCondition()
-        })
+        // Simulate loading data asynchronously
+        loadData()
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -66,19 +55,16 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
 
-// This is your condition function to determine when to dismiss the splash screen
-private fun someCondition(): Boolean {
-    return isDataLoaded
-}
-
-// Simulate a condition (like data loading)
-private var isDataLoaded: Boolean = false
-
-// You can update the condition in your lifecycle or based on some logic
-private fun loadData() {
-    // Simulate data loading
-    // When the data is loaded, set `isDataLoaded` to true
-    isDataLoaded = true
+    // Simulate an async data loading process
+    private fun loadData() {
+        // Simulating a delay or data fetching process using a thread or coroutines
+        // Here you would load your data (e.g. from Firestore, a local database, etc.)
+        Thread {
+            // Simulate a network or database call delay
+            Thread.sleep(3000) // 3 seconds delay to simulate loading
+            // Once the data is loaded, set `isDataLoaded` to true
+            isDataLoaded = true
+        }.start()
+    }
 }

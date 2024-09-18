@@ -4,7 +4,7 @@
     <style name="Theme.ShoppingPointsAdmin" parent="android:Theme.Material.Light.NoActionBar" />
     <style name="Theme.SplashScreen.MySplash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/white</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/agraph_text</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/shopoints</item>
         <item name="postSplashScreenTheme">@style/Theme.SplashScreen</item>
     </style>
 </resources>

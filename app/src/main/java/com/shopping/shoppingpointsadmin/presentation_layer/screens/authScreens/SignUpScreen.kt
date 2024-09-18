@@ -36,7 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.shopping.shoppingpointsadmin.R
+import com.shopping.shoppingpointsadmin.domain_layer.models.Admin
 import com.shopping.shoppingpointsadmin.presentation_layer.navigation.AdminRoutes
 import com.shopping.shoppingpointsadmin.presentation_layer.navigation.AdminSubNavigation
 import com.shopping.shoppingpointsadmin.presentation_layer.viewModel.AppViewModel
@@ -74,42 +75,42 @@ fun SignUpScreen(
     navController: NavHostController, appViewModel: AppViewModel
 ) {
 
-    val adminName = remember {
+    val adminName = rememberSaveable {
         mutableStateOf("")
     }
 
-    val adminEmail = remember {
+    val adminEmail = rememberSaveable {
         mutableStateOf("")
     }
 
-    val adminPhone = remember {
+    val adminPhone = rememberSaveable {
         mutableStateOf("")
     }
 
-    val errorName = remember {
+    val errorName = rememberSaveable {
         mutableStateOf(false)
     }
 
-    val errorPhone = remember {
+    val errorPhone = rememberSaveable {
         mutableStateOf(false)
     }
-    val errorEmail = remember {
+    val errorEmail = rememberSaveable {
         mutableStateOf(false)
     }
 
-    val adminPassword = remember {
+    val adminPassword = rememberSaveable {
         mutableStateOf("")
     }
-    val errorPassword = remember {
+    val errorPassword = rememberSaveable {
         mutableStateOf(false)
     }
 
-    var passwordVisible by remember { mutableStateOf(false) }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
 
-    val registerStateResponse = appViewModel.registerUserResponse.value
-
+    val registerState = appViewModel.registerUserState.value
+    val saveState = appViewModel.saveResponse.value
 
     Column(
         modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly
@@ -422,8 +423,7 @@ fun SignUpScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                if (registerStateResponse.isLoading) {
-
+                if (registerState.isLoading && saveState.isLoading) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -471,10 +471,16 @@ fun SignUpScreen(
                             } else {
                                 val encryptedPassword = encryptPassword(adminPassword.value)
                                 // all sign up process
-
                                 appViewModel.registerUser(
-                                    email = adminEmail.value, password = encryptedPassword
+                                    email = adminEmail.value, password = adminPassword.value
                                 )
+                                val adminDetails = Admin(
+                                    name = adminName.value,
+                                    email = adminEmail.value,
+                                    phone = adminPhone.value,
+                                    password = encryptedPassword
+                                )
+                                appViewModel.saveAdminDetails(adminDetails)
                             }
                         },
                         colors = ButtonDefaults.buttonColors(AppColor)
@@ -491,23 +497,28 @@ fun SignUpScreen(
                         )
                     }
                     // Show error message if there is one
-                    if (registerStateResponse.error.isNotEmpty()) {
-                        Toast.makeText(context, registerStateResponse.error, Toast.LENGTH_SHORT)
+                    if (registerState.error.isNotEmpty()) {
+                        Toast.makeText(context, registerState.error, Toast.LENGTH_SHORT)
                             .show()
                     }
-
-                    LaunchedEffect(key1 = true) {
+                    if (saveState.error.isNotEmpty()) {
+                        Toast.makeText(context, saveState.error, Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                    LaunchedEffect(key1 = registerState.success) {
                         // Show success message when registration is successful
-                        if (registerStateResponse.success != null) {
+                        if (registerState.success != null && saveState.success != null) {
+
+                            navController.navigate(AdminSubNavigation.AdminHomeMainNav) {
+                                popUpTo(AdminSubNavigation.AdminLoginNav) {
+                                    inclusive = true
+                                }
+                            }
                             Toast.makeText(context, "Register User Successfully!", Toast.LENGTH_SHORT)
                                 .show()
-                            navController.navigate(AdminSubNavigation.AdminHomeMainNav)
                         }
-
                     }
-
                 }
-
 
                 val annotatedText1 = buildAnnotatedString {
                     append("Joined us before? ")
@@ -530,7 +541,11 @@ fun SignUpScreen(
                     color = Color.Gray,
                     modifier = Modifier
                         .clickable {
-                            navController.navigate(AdminRoutes.LoginScreen)
+                            navController.navigate(AdminRoutes.LoginScreen) {
+                                popUpTo(AdminRoutes.SignUpScreen) {
+                                    inclusive = true
+                                }
+                            }
                         }
                         .padding(10.dp)
                 )

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,13 +32,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -59,32 +63,36 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.shopping.shoppingpointsadmin.R
 import com.shopping.shoppingpointsadmin.presentation_layer.navigation.AdminRoutes
+import com.shopping.shoppingpointsadmin.presentation_layer.navigation.AdminSubNavigation
 import com.shopping.shoppingpointsadmin.presentation_layer.viewModel.AppViewModel
 import com.shopping.shoppingpointsadmin.ui.theme.AppColor
 import com.shopping.shoppingpointsadmin.ui.theme.BackgroundColor
 import com.shopping.shoppingpointsadmin.ui.theme.Color1
+import com.shopping.shoppingpointsadmin.utils.encryptPassword
 
 @Composable
 fun LoginScreen(navController: NavHostController, appViewModel: AppViewModel) {
 
-    val adminEmail = remember {
+    val adminEmail = rememberSaveable {
         mutableStateOf("")
     }
 
-    val errorEmail = remember {
+    val errorEmail = rememberSaveable {
         mutableStateOf(false)
     }
 
-    val adminPassword = remember {
+    val adminPassword = rememberSaveable {
         mutableStateOf("")
     }
-    val errorPassword = remember {
+    val errorPassword = rememberSaveable {
         mutableStateOf(false)
     }
 
-    var passwordVisible by remember { mutableStateOf(false) }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
+
+    val loginState = appViewModel.loginState.value
 
     Column(
         modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly
@@ -270,39 +278,79 @@ fun LoginScreen(navController: NavHostController, appViewModel: AppViewModel) {
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
-                ElevatedButton(
-                    contentPadding = PaddingValues(),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        errorEmail.value = false
-                        errorPassword.value = false
 
-                        if (adminEmail.value.isEmpty() || adminPassword.value.isEmpty()) {
-                            if (adminEmail.value.isEmpty()) {
-                                errorEmail.value = true
+                if (loginState.isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = AppColor,
+                            strokeCap = StrokeCap.Round,
+                            strokeWidth = 2.dp
+                        )
+                    }
+                } else {
+                    ElevatedButton(
+                        contentPadding = PaddingValues(),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        onClick = {
+                            errorEmail.value = false
+                            errorPassword.value = false
+
+                            if (adminEmail.value.isEmpty() || adminPassword.value.isEmpty()) {
+                                if (adminEmail.value.isEmpty()) {
+                                    errorEmail.value = true
+                                }
+                                if (adminPassword.value.isEmpty()) {
+                                    errorPassword.value = true
+                                }
+                                Toast.makeText(context, "Fill all the Fields", Toast.LENGTH_SHORT)
+                                    .show()
+                            } else {
+                                appViewModel.loginUser(
+                                    email = adminEmail.value,
+                                    password = adminPassword.value
+                                )
                             }
-                            if (adminPassword.value.isEmpty()) {
-                                errorPassword.value = true
+                        },
+                        colors = ButtonDefaults.buttonColors(AppColor)
+                    ) {
+                        Text(
+                            text = "Login",
+                            fontStyle = FontStyle.Normal,
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = FontFamily(
+                                Font(R.font.playpen_sans_medium)
+                            ),
+                            fontSize = 17.sp,
+                            color = Color.White
+                        )
+                    }
+
+                    LaunchedEffect(key1 = loginState.success) {
+                        if (loginState.error.isNotEmpty()) {
+                            Toast.makeText(context, loginState.error, Toast.LENGTH_SHORT).show()
+                        }
+                        if (loginState.success != null) {
+
+                            navController.navigate(AdminSubNavigation.AdminHomeMainNav){
+                                popUpTo(AdminSubNavigation.AdminLoginNav){
+                                    inclusive=true
+                                }
                             }
-                            Toast.makeText(context, "Fill all the Fields", Toast.LENGTH_SHORT)
-                                .show()
+                            Toast.makeText(
+                                context,
+                                "${loginState.success.user?.email ?:""} Login Successfully!",
+                                Toast.LENGTH_SHORT
+                            ).show()
 
                         }
-                    },
-                    colors = ButtonDefaults.buttonColors(AppColor)
-                ) {
-                    Text(
-                        text = "Login",
-                        fontStyle = FontStyle.Normal,
-                        fontWeight = FontWeight.Normal,
-                        fontFamily = FontFamily(
-                            Font(R.font.playpen_sans_medium)
-                        ),
-                        fontSize = 17.sp,
-                        color = Color.White
-                    )
+                    }
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(
