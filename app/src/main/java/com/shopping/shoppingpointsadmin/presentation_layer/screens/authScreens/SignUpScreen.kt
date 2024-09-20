@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,14 +68,13 @@ import com.shopping.shoppingpointsadmin.presentation_layer.navigation.AdminSubNa
 import com.shopping.shoppingpointsadmin.presentation_layer.viewModel.AppViewModel
 import com.shopping.shoppingpointsadmin.ui.theme.AppColor
 import com.shopping.shoppingpointsadmin.ui.theme.BackgroundColor
+import com.shopping.shoppingpointsadmin.utils.checkPasswordStrength
 import com.shopping.shoppingpointsadmin.utils.encryptPassword
-import com.shopping.shoppingpointsadmin.utils.isPasswordStrong
 
 @Composable
 fun SignUpScreen(
     navController: NavHostController, appViewModel: AppViewModel
 ) {
-
     val adminName = rememberSaveable {
         mutableStateOf("")
     }
@@ -105,12 +105,66 @@ fun SignUpScreen(
         mutableStateOf(false)
     }
 
+    val encryptedPassword = remember {
+        mutableStateOf("")
+    }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
 
     val registerState = appViewModel.registerUserState.value
     val saveState = appViewModel.saveResponse.value
+//    val currentUser = appViewModel.currentUser.value
+
+
+    LaunchedEffect(key1 = registerState/*, key2 = saveState*/) {
+        // Show error message if there is one
+        if (registerState.error.isNotEmpty()) {
+            Toast.makeText(
+                context,
+                registerState.error,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+
+        // Show success message when registration is successful
+        if (registerState.success != null) {
+            val userId = appViewModel.currentUser.value?.uid
+
+            if (userId?.isNotEmpty()!! && adminName.value.isNotEmpty() && adminPhone.value.isNotEmpty() && adminEmail.value.isNotEmpty() && adminPassword.value.isNotEmpty()) {
+                val admin =
+                    Admin(
+                        adminId = userId,
+                        name = adminName.value,
+                        password = encryptPassword(adminPassword.value) ,
+                        email = adminEmail.value,
+                        phone = adminPhone.value
+                    )
+                appViewModel.saveAdminDetails(admin)
+            }
+
+            // On successful signup, navigate to home and clear the signup stack
+            navController.navigate(AdminSubNavigation.AdminHomeMainNav)
+            {
+                popUpTo(AdminSubNavigation.AdminLoginNav) {
+                    inclusive = true // Clears all login-related screens from back stack
+                }
+            }
+            // Registration successful ka Toast show kar rahe hain
+            Toast.makeText(
+                context,
+                "Register User Successfully!",
+                Toast.LENGTH_SHORT
+            ).show()
+
+        }
+    }
+
+    LaunchedEffect(key1 = saveState) {
+
+
+    }
 
     Column(
         modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly
@@ -122,12 +176,10 @@ fun SignUpScreen(
                     color = BackgroundColor,
                 ), contentAlignment = Alignment.BottomEnd
         ) {
-
             Image(
                 painter = painterResource(id = R.drawable.shop2),
                 contentDescription = "",
                 modifier = Modifier
-
             )
         }
 
@@ -423,7 +475,7 @@ fun SignUpScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                if (registerState.isLoading && saveState.isLoading) {
+                if (registerState.isLoading /*&& saveState.isLoading*/) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -463,24 +515,22 @@ fun SignUpScreen(
                                 }
                                 Toast.makeText(context, "Fill all the Fields", Toast.LENGTH_SHORT)
                                     .show()
-                            } else if (!isPasswordStrong(adminPassword.value)) {
-                                errorPassword.value = true
-                                Toast.makeText(
-                                    context, "Password must be strong", Toast.LENGTH_SHORT
-                                ).show()
                             } else {
-                                val encryptedPassword = encryptPassword(adminPassword.value)
-                                // all sign up process
-                                appViewModel.registerUser(
-                                    email = adminEmail.value, password = adminPassword.value
-                                )
-                                val adminDetails = Admin(
-                                    name = adminName.value,
-                                    email = adminEmail.value,
-                                    phone = adminPhone.value,
-                                    password = encryptedPassword
-                                )
-                                appViewModel.saveAdminDetails(adminDetails)
+                                val passwordStrengthMsg = checkPasswordStrength(adminPassword.value)
+                                if (passwordStrengthMsg != null) {
+                                    errorPassword.value = true
+                                    Toast.makeText(
+                                        context, passwordStrengthMsg, Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    encryptedPassword.value = encryptPassword(adminPassword.value)
+                                    // all sign up process
+                                    appViewModel.registerUser(
+                                        email = adminEmail.value, password = adminPassword.value
+                                    )
+
+
+                                }
                             }
                         },
                         colors = ButtonDefaults.buttonColors(AppColor)
@@ -496,28 +546,8 @@ fun SignUpScreen(
                             color = Color.White
                         )
                     }
-                    // Show error message if there is one
-                    if (registerState.error.isNotEmpty()) {
-                        Toast.makeText(context, registerState.error, Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                    if (saveState.error.isNotEmpty()) {
-                        Toast.makeText(context, saveState.error, Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                    LaunchedEffect(key1 = registerState.success) {
-                        // Show success message when registration is successful
-                        if (registerState.success != null && saveState.success != null) {
 
-                            navController.navigate(AdminSubNavigation.AdminHomeMainNav) {
-                                popUpTo(AdminSubNavigation.AdminLoginNav) {
-                                    inclusive = true
-                                }
-                            }
-                            Toast.makeText(context, "Register User Successfully!", Toast.LENGTH_SHORT)
-                                .show()
-                        }
-                    }
+
                 }
 
                 val annotatedText1 = buildAnnotatedString {
@@ -541,11 +571,7 @@ fun SignUpScreen(
                     color = Color.Gray,
                     modifier = Modifier
                         .clickable {
-                            navController.navigate(AdminRoutes.LoginScreen) {
-                                popUpTo(AdminRoutes.SignUpScreen) {
-                                    inclusive = true
-                                }
-                            }
+                            navController.navigate(AdminRoutes.LoginScreen)
                         }
                         .padding(10.dp)
                 )

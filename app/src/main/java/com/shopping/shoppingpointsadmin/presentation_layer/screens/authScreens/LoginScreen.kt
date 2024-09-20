@@ -35,7 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -66,9 +65,7 @@ import com.shopping.shoppingpointsadmin.presentation_layer.navigation.AdminRoute
 import com.shopping.shoppingpointsadmin.presentation_layer.navigation.AdminSubNavigation
 import com.shopping.shoppingpointsadmin.presentation_layer.viewModel.AppViewModel
 import com.shopping.shoppingpointsadmin.ui.theme.AppColor
-import com.shopping.shoppingpointsadmin.ui.theme.BackgroundColor
 import com.shopping.shoppingpointsadmin.ui.theme.Color1
-import com.shopping.shoppingpointsadmin.utils.encryptPassword
 
 @Composable
 fun LoginScreen(navController: NavHostController, appViewModel: AppViewModel) {
@@ -94,14 +91,41 @@ fun LoginScreen(navController: NavHostController, appViewModel: AppViewModel) {
 
     val loginState = appViewModel.loginState.value
 
+
+
+    LaunchedEffect(key1 = loginState) {
+
+        if (loginState.error.isNotEmpty()) {
+            Toast.makeText(context, loginState.error, Toast.LENGTH_SHORT).show()
+        }
+        if (loginState.success != null) {
+            // On successful login, navigate to home and clear the login stack
+            navController.navigate(AdminSubNavigation.AdminHomeMainNav) {
+                popUpTo(AdminSubNavigation.AdminLoginNav) {
+                    inclusive = true // Clears all login-related screens from back stack
+                }
+            }
+
+            Toast.makeText(
+                context,
+                "${loginState.success.user?.email ?:""} Login Successfully!",
+                Toast.LENGTH_SHORT
+            ).show()
+
+        }
+
+    }
     Column(
-        modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFFEF3E0)),
+        verticalArrangement = Arrangement.SpaceEvenly
     ) {
         Box(
             modifier = Modifier
                 .weight(0.35f)
                 .background(
-                    color = BackgroundColor,
+                    color = Color(0xFFFEF3E0),
                 ), contentAlignment = Alignment.BottomEnd
         ) {
             Image(
@@ -331,27 +355,8 @@ fun LoginScreen(navController: NavHostController, appViewModel: AppViewModel) {
                             color = Color.White
                         )
                     }
+                 }
 
-                    LaunchedEffect(key1 = loginState.success) {
-                        if (loginState.error.isNotEmpty()) {
-                            Toast.makeText(context, loginState.error, Toast.LENGTH_SHORT).show()
-                        }
-                        if (loginState.success != null) {
-
-                            navController.navigate(AdminSubNavigation.AdminHomeMainNav){
-                                popUpTo(AdminSubNavigation.AdminLoginNav){
-                                    inclusive=true
-                                }
-                            }
-                            Toast.makeText(
-                                context,
-                                "${loginState.success.user?.email ?:""} Login Successfully!",
-                                Toast.LENGTH_SHORT
-                            ).show()
-
-                        }
-                    }
-                }
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

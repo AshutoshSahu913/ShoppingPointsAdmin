@@ -97,7 +97,8 @@ fun App(navController: NavHostController) {
         }
 
         navigation<AdminSubNavigation.AdminHomeMainNav>(startDestination = AdminRoutes.DashBoardScreen) {
-            composable<AdminRoutes.DashBoardScreen>/*(exitTransition = {
+
+            composable<AdminRoutes.DashBoardScreen>(exitTransition = {
                 slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.Left,
                     tween(500)
@@ -119,7 +120,7 @@ fun App(navController: NavHostController) {
                         AnimatedContentTransitionScope.SlideDirection.Right,
                         tween(500)
                     ) + fadeOut()
-                }) */{
+                }) {
                 DashBoardScreen(navController, appViewModel)
             }
 
